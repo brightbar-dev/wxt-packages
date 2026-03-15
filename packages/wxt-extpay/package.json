@@ -1,0 +1,38 @@
+{
+  "name": "@brightbar-dev/wxt-extpay",
+  "version": "0.1.0",
+  "description": "WXT module for ExtensionPay integration — content script injection, payment helpers, and config",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./src/index.ts",
+    "./helpers": "./src/helpers.ts",
+    "./pro-status": "./src/pro-status.ts"
+  },
+  "files": [
+    "src",
+    "index.js"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test tests/e2e/payment-flow.spec.ts",
+    "test:e2e:payment": "playwright test tests/e2e/payment-full-flow.spec.ts",
+    "test:all": "vitest run && playwright test tests/e2e/payment-flow.spec.ts"
+  },
+  "peerDependencies": {
+    "extpay": "^3.0.0",
+    "wxt": ">=0.19.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "extpay": "^3.1.2",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.9",
+    "wxt": "^0.20.5"
+  },
+  "license": "MIT"
+}

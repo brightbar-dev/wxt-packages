@@ -1,0 +1,43 @@
+name: Publish
+
+on:
+  push:
+    tags: ['wxt-extpay@*']
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/wxt-extpay
+      - name: Run tests
+        run: npx vitest run
+        working-directory: packages/wxt-extpay
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@brightbar-dev'
+      - name: Install dependencies
+        run: npm ci
+        working-directory: packages/wxt-extpay
+      - name: Publish to GitHub Packages
+        run: npm publish
+        working-directory: packages/wxt-extpay
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
