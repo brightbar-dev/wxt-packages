@@ -1,3 +1,3 @@
-// Entry point for WXT module resolution
-// WXT's resolver needs a JS file; the actual module is in src/index.ts
-export { default } from './src/index.ts';
+// Entry point fallback for WXT module resolution
+// Primary resolution via package.json "exports" field → dist/index.js
+export { default } from './dist/index.js';

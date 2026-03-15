@@ -23,6 +23,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Resolve to package root (works from both src/ and dist/)
+const pkgRoot = __dirname.endsWith('/dist') || __dirname.endsWith('\\dist')
+  ? path.resolve(__dirname, '..')
+  : path.resolve(__dirname, '..');
 
 export interface ExtPayModuleOptions {
   /** ExtensionPay extension ID (registered at extensionpay.com) */
@@ -48,7 +52,7 @@ export default defineWxtModule<ExtPayModuleOptions>({
 
     // Inject the ExtPay content script for extensionpay.com
     // This is required for ExtPay to detect payment completion in real-time
-    const contentScriptPath = path.resolve(__dirname, 'extpay-content.ts');
+    const contentScriptPath = path.resolve(pkgRoot, 'src', 'extpay-content.ts');
 
     addEntrypoint(wxt, {
       type: 'content-script',
