@@ -1,0 +1,18 @@
+[tools]
+node = "22"
+
+[tasks.test]
+run = "npm test"
+description = "Run package tests"
+
+[tasks.build]
+run = "npm run build"
+description = "Build all packages"
+
+[tasks.setup]
+run = "npm ci"
+description = "Install deps"
+
+[tasks.ci]
+run = ["npm ci", "npm run build", "npm test"]
+description = "Full CI pipeline"
