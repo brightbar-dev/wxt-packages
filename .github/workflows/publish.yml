@@ -26,6 +26,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # Preflight and post-publish assertion, added 2026-08-26.
+      #
+      # WHY: this workflow was switched from GitHub Packages to registry.npmjs.org
+      # in 5c55072 (2026-04-02) and has NEVER RUN since -- the newest tag,
+      # wxt-extpay@0.2.0, predates the switch by 18 days, and this file fires only
+      # on `push: tags`. Meanwhile NPM_TOKEN does not exist: not as a repo secret,
+      # not among brightbar-dev's five org secrets, and no npm credential is
+      # recorded anywhere in the estate vault. The next tag push would therefore
+      # have died inside `npm publish` with an opaque ENEEDAUTH.
+      #
+      # That opacity is the real defect being fixed here. Both 2026-03-15 runs
+      # concluded "success" and both genuinely published -- to GitHub Packages,
+      # which is what this file said at the time -- and a later reader comparing
+      # "success" against an empty registry.npmjs.org reasonably but wrongly
+      # concluded "a job that says it published, did not". A green run must name
+      # the registry it actually wrote to.
+      - name: Preflight - refuse to start without a publish credential
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "${NODE_AUTH_TOKEN}" ]; then
+            MSG="This workflow targets registry.npmjs.org but no NPM_TOKEN secret is available to brightbar-dev/wxt-packages (repo secrets and org secrets both checked, 2026-08-26 - neither has one). Publishing cannot succeed. Either mint an npm automation token and add it as NPM_TOKEN, or revert this workflow to the GitHub Packages target that the 0.1.0/0.2.0 releases actually used."
+            echo "::error title=NPM_TOKEN is not set::${MSG}"
+            exit 1
+          fi
+          echo "NPM_TOKEN is present; proceeding to publish to registry.npmjs.org"
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -40,3 +66,22 @@ jobs:
         working-directory: packages/wxt-extpay
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Assert the mutation landed. A publish step that exits 0 is not evidence
+      # the package is fetchable, and this repo has already produced green runs
+      # whose meaning had to be reconstructed from a step's NAME five months later.
+      - name: Verify the published version is live on registry.npmjs.org
+        working-directory: packages/wxt-extpay
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          echo "Asserting @brightbar-dev/wxt-extpay@${VERSION} on registry.npmjs.org"
+          for attempt in 1 2 3 4 5; do
+            if npm view "@brightbar-dev/wxt-extpay@${VERSION}" version --registry https://registry.npmjs.org >/dev/null 2>&1; then
+              echo "OK - @brightbar-dev/wxt-extpay@${VERSION} is live on registry.npmjs.org"
+              exit 0
+            fi
+            echo "not visible yet (attempt ${attempt}/5); waiting for registry propagation"
+            sleep 10
+          done
+          MSG="npm publish exited 0, but @brightbar-dev/wxt-extpay@${VERSION} is not resolvable on registry.npmjs.org after 5 attempts. Do not treat this run as a release."
+          echo "::error title=Publish reported success but the package is not fetchable::${MSG}"
+          exit 1
