@@ -22,3 +22,6 @@ jobs:
       - name: Run tests
         run: npx vitest run
         working-directory: packages/wxt-extpay
+      - name: Run review-nudge tests and typecheck
+        run: npx vitest run && npx tsc --noEmit
+        working-directory: packages/review-nudge
