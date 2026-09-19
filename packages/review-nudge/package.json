@@ -1,0 +1,27 @@
+{
+  "name": "@brightbar-dev/review-nudge",
+  "version": "0.1.0",
+  "description": "A once-only, after-real-use request for a store review, with a separate route for problems. No dependencies.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.14.5",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  },
+  "license": "MIT"
+}
