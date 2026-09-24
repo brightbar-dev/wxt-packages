@@ -6,6 +6,7 @@ import {
   mountReviewNudge,
   readState,
   recordActivation,
+  reviewNudgeCss,
   settle,
   type MountOptions,
   type NudgeStorage,
@@ -198,5 +199,11 @@ describe('storage', () => {
 
   it('fails loudly with no storage at all', async () => {
     await expect(recordActivation()).rejects.toThrow(/no storage\.local/);
+  });
+});
+
+describe('reviewNudgeCss', () => {
+  it('never dims text: host muted colours at reduced opacity fall below 4.5:1', () => {
+    expect(reviewNudgeCss).not.toMatch(/opacity\s*:\s*(0?\.\d+|0)\b/);
   });
 });

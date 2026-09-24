@@ -1,6 +1,6 @@
 {
   "name": "@brightbar-dev/review-nudge",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A once-only, after-real-use request for a store review, with a separate route for problems. No dependencies.",
   "type": "module",
   "exports": {

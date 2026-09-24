@@ -211,9 +211,10 @@ export async function mountReviewNudge(container: HTMLElement, options: MountOpt
 
 /**
  * Minimal styles that take the host page's font and colours; override the custom properties to
- * theme it. Inject once, for example with a <style> element.
+ * theme it. Inject once, for example with a <style> element. Nothing is dimmed: an extension's muted
+ * text colour at 70% opacity fell below 4.5:1 in all four Brightbar extensions (2026-09-24).
  */
 export const reviewNudgeCss = `.bb-review-nudge{display:flex;flex-wrap:wrap;align-items:baseline;gap:.25em;padding:var(--bb-nudge-padding,.5em .75em);font:inherit;font-size:var(--bb-nudge-font-size,.85em);color:var(--bb-nudge-color,inherit);border-top:1px solid var(--bb-nudge-border,color-mix(in srgb,currentColor 15%,transparent))}
 .bb-review-nudge a{color:var(--bb-nudge-link,inherit)}
-.bb-review-nudge-dismiss{margin-left:auto;font:inherit;color:inherit;opacity:.7;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
-.bb-review-nudge-dismiss:hover,.bb-review-nudge-dismiss:focus-visible{opacity:1}`;
+.bb-review-nudge-dismiss{margin-left:auto;font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.bb-review-nudge-dismiss:hover,.bb-review-nudge-dismiss:focus-visible{text-decoration-thickness:2px}`;
