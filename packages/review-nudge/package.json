@@ -13,6 +13,14 @@
     "src",
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brightbar-dev/wxt-packages.git",
+    "directory": "packages/review-nudge"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
