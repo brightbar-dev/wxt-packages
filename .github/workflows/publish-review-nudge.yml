@@ -1,0 +1,66 @@
+name: Publish review-nudge
+
+# Private GitHub Packages only (npm.pkg.github.com, GITHUB_TOKEN). Never npmjs:
+# review-nudge's publishConfig pins the registry, and so does setup-node below.
+
+on:
+  push:
+    tags: ['review-nudge@*']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests and typecheck
+        run: npx vitest run && npx tsc --noEmit
+        working-directory: packages/review-nudge
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: https://npm.pkg.github.com
+          scope: '@brightbar-dev'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build
+        working-directory: packages/review-nudge
+      - name: Tag matches package version
+        working-directory: packages/review-nudge
+        run: |
+          want="review-nudge@$(node -p 'require("./package.json").version')"
+          [ "$GITHUB_REF_NAME" = "$want" ] || { echo "::error::tag $GITHUB_REF_NAME != $want"; exit 1; }
+      - name: Publish to GitHub Packages
+        run: npm publish
+        working-directory: packages/review-nudge
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Assert the publish landed
+        working-directory: packages/review-nudge
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          v="$(node -p 'require("./package.json").version')"
+          for i in 1 2 3 4 5 6; do
+            got="$(npm view "@brightbar-dev/review-nudge@$v" version 2>/dev/null || true)"
+            [ "$got" = "$v" ] && { echo "published $v"; exit 0; }
+            sleep 10
+          done
+          echo "::error::@brightbar-dev/review-nudge@$v not visible on npm.pkg.github.com"; exit 1
