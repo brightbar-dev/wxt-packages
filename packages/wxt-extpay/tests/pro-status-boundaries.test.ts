@@ -51,13 +51,16 @@ describe('trial boundaries', () => {
     expect(resolveProStatus({ paid: false, paidAt: null, trialStartedAt: ago(7 * DAY) }).trialActive).toBe(false);
   });
 
-  // BUG: trialStartedAt comes from the ExtensionPay server; when the user's clock runs behind it,
-  // elapsed time is negative and trialDaysRemaining reports more days than the trial has
-  // (a 7-day trial started "2 days in the future" shows "Trial (9d left)"). It should be capped
-  // at trialDays. Not fixed in this PR.
-  it.skip('never reports more days left than the trial length, even with clock skew', () => {
+  // Guards against a user clock running behind the ExtensionPay server's trialStartedAt.
+  it('never reports more days left than the trial length, even with clock skew', () => {
     const inFuture = new Date(NOW + 2 * DAY);
     expect(trialDaysRemaining(inFuture, 7)).toBeLessThanOrEqual(7);
+  });
+
+  it('treats a trial started in the future as just started, keeping status and days consistent', () => {
+    const inFuture = new Date(NOW + 2 * DAY);
+    expect(resolveProStatus({ paid: false, paidAt: null, trialStartedAt: inFuture }, 7)).toMatchObject({ trialActive: true, trialDaysLeft: 7 });
+    expect(resolveProStatus({ paid: false, paidAt: null, trialStartedAt: inFuture }, 0)).toMatchObject({ unlocked: false, trialActive: false, trialDaysLeft: 0 });
   });
 });
 
