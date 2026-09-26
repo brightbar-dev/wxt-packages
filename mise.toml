@@ -1,18 +1,19 @@
 [tools]
 node = "22"
+pnpm = "12.6.0"
 
 [tasks.test]
-run = "npm test"
+run = "pnpm -r test"
 description = "Run package tests"
 
 [tasks.build]
-run = "npm run build"
+run = "pnpm -r build"
 description = "Build all packages"
 
 [tasks.setup]
-run = "npm ci"
+run = "pnpm install --frozen-lockfile"
 description = "Install deps"
 
 [tasks.ci]
-run = ["npm ci", "npm run build", "npm test"]
+run = ["pnpm install --frozen-lockfile", "pnpm -r build", "pnpm -r test"]
 description = "Full CI pipeline"

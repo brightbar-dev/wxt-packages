@@ -1,7 +1,5 @@
 {
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "name": "wxt-packages"
+  "name": "wxt-packages",
+  "packageManager": "pnpm@12.6.0"
 }
