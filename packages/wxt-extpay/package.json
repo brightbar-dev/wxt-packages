@@ -45,7 +45,7 @@
     "@types/node": "^22.20.4",
     "extpay": "^3.1.2",
     "typescript": "^7.0.2",
-    "vitest": "^5.0.1",
+    "vitest": "^5.0.2",
     "wxt": "^0.21.4"
   },
   "license": "MIT"
