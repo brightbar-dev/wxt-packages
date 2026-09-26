@@ -28,6 +28,8 @@ export interface NudgeState {
   /** The local day (YYYY-MM-DD) of the last counted use. */
   lastDay: string;
   shownAt?: number;
+  /** Which mount claimed the one showing; lets it confirm no other surface overwrote the claim. */
+  claim?: string;
 }
 
 /** The subset of chrome.storage.local this needs. */
@@ -114,12 +116,41 @@ export async function recordActivation(options: NudgeOptions = {}): Promise<void
   });
 }
 
-/** True only while counting and every threshold is met. */
-export async function isEligible(options: NudgeOptions = {}): Promise<boolean> {
+function meetsThresholds(s: NudgeState | undefined, options: NudgeOptions): s is NudgeState {
   const { now, minActivations, minActiveDays, minAgeDays } = settings(options);
-  const s = await readState(options);
   if (!s || s.status !== 'counting') return false;
   return s.activations >= minActivations && s.activeDays >= minActiveDays && now() - s.firstUseAt >= minAgeDays * DAY_MS;
+}
+
+/** True only while counting and every threshold is met. */
+export async function isEligible(options: NudgeOptions = {}): Promise<boolean> {
+  return meetsThresholds(await readState(options), options);
+}
+
+/** Pending claims per storage area and key, so mounts in one JS context take turns. */
+const claimQueues = new WeakMap<NudgeStorage, Map<string, Promise<unknown>>>();
+
+/**
+ * Check eligibility and retire the nudge as one step. Within a JS context mounts run one at a time,
+ * so only the first sees `counting`. Across contexts (popup and options page) only storage is
+ * shared: each writes its own claim token and renders only if the re-read still shows that token,
+ * which stops every overlap except two claims whose write and re-read both land in the gap between
+ * the other's write and re-read.
+ */
+function claimShowing(options: NudgeOptions): Promise<boolean> {
+  const { storage, key, now } = settings(options);
+  let queues = claimQueues.get(storage);
+  if (!queues) claimQueues.set(storage, (queues = new Map()));
+  const run = async () => {
+    const s = await readState(options);
+    if (!meetsThresholds(s, options)) return false;
+    const claim = `${now()}-${Math.random().toString(36).slice(2)}`;
+    await write(options, { ...s, status: 'shown', shownAt: now(), claim });
+    return (await readState(options))?.claim === claim;
+  };
+  const result = (queues.get(key) ?? Promise.resolve()).then(run, run);
+  queues.set(key, result);
+  return result;
 }
 
 /**
@@ -167,9 +198,8 @@ export interface MountOptions extends NudgeOptions {
  * in the same step. Returns the element, or null when nothing was shown.
  */
 export async function mountReviewNudge(container: HTMLElement, options: MountOptions): Promise<HTMLElement | null> {
-  if (!(await isEligible(options))) return null;
   // Retire first: a popup closed a moment after opening must not earn a second showing.
-  await settle('shown', options);
+  if (!(await claimShowing(options))) return null;
 
   const str = { ...englishStrings, ...options.strings };
   const doc = container.ownerDocument;

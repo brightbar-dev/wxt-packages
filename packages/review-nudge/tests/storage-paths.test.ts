@@ -115,11 +115,8 @@ describe('chromeWebStoreReviewUrl', () => {
 });
 
 describe('two surfaces opened at once', () => {
-  // BUG: mountReviewNudge checks eligibility and retires the nudge in two separate async storage
-  // round-trips, so two surfaces mounting at the same moment (a popup and an options page, or two
-  // windows' popups) both read `counting`, both render, and the "shown once" rule is broken.
-  // Not fixed in this PR.
-  it.skip('renders the nudge on only one of them', async () => {
+  // Guards "shown once" when a popup and an options page (or two popups) mount together.
+  it('renders the nudge on only one of them', async () => {
     const storage = memoryStorage();
     let clock = START;
     const opts = { storage, now: () => clock, minActivations: 1, minActiveDays: 1, minAgeDays: 0 };
@@ -132,5 +129,24 @@ describe('two surfaces opened at once', () => {
     const b = document.createElement('div');
     const [ra, rb] = await Promise.all([mountReviewNudge(a, mount), mountReviewNudge(b, mount)]);
     expect([ra, rb].filter(Boolean)).toHaveLength(1);
+  });
+
+  it('stays hidden when another extension page overwrites its claim before it renders', async () => {
+    const storage = memoryStorage();
+    let clock = START;
+    const opts = { storage, now: () => clock, minActivations: 1, minActiveDays: 1, minAgeDays: 0 };
+    await recordActivation(opts);
+    clock += DAY;
+
+    // Another context shares only storage: its claim lands right after ours.
+    const set = storage.set;
+    storage.set = async (items) => {
+      await set(items);
+      const s = storage.data.reviewNudge as { claim?: string };
+      if (s.claim) await set({ reviewNudge: { ...s, claim: 'other-page' } });
+    };
+    const mount = { ...opts, name: 'X', reviewUrl: 'https://r.example', feedbackUrl: 'https://f.example' };
+    expect(await mountReviewNudge(document.createElement('div'), mount)).toBeNull();
+    expect((await readState(opts))?.status).toBe('shown');
   });
 });
