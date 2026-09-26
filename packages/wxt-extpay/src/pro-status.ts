@@ -28,17 +28,25 @@ export interface ExtPayConfig {
 
 // ── Pro status resolution ──────────────────────────────────
 
+/**
+ * Time since the trial started, never negative: trialStartedAt comes from the ExtensionPay server,
+ * so a user clock running behind it would otherwise lengthen the trial.
+ */
+function trialElapsed(trialStartedAt: Date): number {
+  return Math.max(0, Date.now() - trialStartedAt.getTime());
+}
+
 /** Check if a trial is still active given its start date */
 export function isTrialActive(trialStartedAt: Date | null, trialDays: number = 7): boolean {
   if (!trialStartedAt) return false;
-  const elapsed = Date.now() - trialStartedAt.getTime();
+  const elapsed = trialElapsed(trialStartedAt);
   return elapsed < trialDays * 24 * 60 * 60 * 1000;
 }
 
 /** Days remaining in trial (0 if expired or not started) */
 export function trialDaysRemaining(trialStartedAt: Date | null, trialDays: number = 7): number {
   if (!trialStartedAt) return 0;
-  const elapsed = Date.now() - trialStartedAt.getTime();
+  const elapsed = trialElapsed(trialStartedAt);
   const remaining = trialDays - elapsed / (24 * 60 * 60 * 1000);
   return Math.max(0, Math.ceil(remaining));
 }
