@@ -1,0 +1,36 @@
+name: Publish to Microsoft Edge Add-ons
+description: >
+  Check the Chrome MV3 zip, then (unless build-only) upload it to an existing Edge Add-ons product and
+  submit it for certification. Expects .output/*-chrome.zip from `wxt zip`.
+inputs:
+  build-only:
+    description: '"true": check the package, upload nothing, need no credential (the dry run)'
+    required: true
+  client-id:
+    description: Partner Center Publish API client ID
+    required: false
+    default: ''
+  api-key:
+    description: Partner Center Publish API key
+    required: false
+    default: ''
+  product-id:
+    description: the product's Partner Center GUID
+    required: false
+    default: ''
+  auto-publish:
+    description: '"false": upload to the draft only, do not submit for certification'
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Submit to Edge Add-ons
+      shell: bash
+      env:
+        EDGE_BUILD_ONLY: ${{ inputs.build-only }}
+        EDGE_CLIENT_ID: ${{ inputs.client-id }}
+        EDGE_API_KEY: ${{ inputs.api-key }}
+        EDGE_PRODUCT_ID: ${{ inputs.product-id }}
+        EDGE_AUTO_PUBLISH: ${{ inputs.auto-publish }}
+      run: bash "$GITHUB_ACTION_PATH/../bin/edge-publish.sh"
