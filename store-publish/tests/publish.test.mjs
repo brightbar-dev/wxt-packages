@@ -124,6 +124,27 @@ test('AMO refuses a package without data_collection_permissions', () => {
   assert.match(r.stderr, /data_collection_permissions/);
 });
 
+test('AMO refuses a name over 50 characters in any locale, even in a dry run', () => {
+  pack('ext-1.2.3-firefox.zip', { ...FIREFOX, name: '__MSG_appName__', description: 'Short.' });
+  pack('ext-1.2.3-sources.zip', { sources: true });
+  for (const [loc, name] of [['en', 'Fine name'], ['de', 'D'.repeat(51)]]) {
+    mkdirSync(join(dir, `loc/_locales/${loc}`), { recursive: true });
+    writeFileSync(join(dir, `loc/_locales/${loc}/messages.json`), JSON.stringify({ AppName: { message: name } }));
+    spawnSync('zip', ['-q', join(dir, 'work/.output/ext-1.2.3-firefox.zip'), `_locales/${loc}/messages.json`], { cwd: join(dir, 'loc') });
+  }
+  const r = run(AMO, [], { AMO_BUILD_ONLY: 'true' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /name \(_locales\/de\/messages\.json, 51 > 50\)/);
+  assert.ok(!r.stderr.includes('_locales/en/'), 'a locale within the limit is not reported');
+});
+
+test('AMO refuses a literal description over 250 characters', () => {
+  amoPackages({ ...FIREFOX, name: 'Ok', description: 'x'.repeat(251) });
+  const r = run(AMO, [], { AMO_BUILD_ONLY: 'true' });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /description \(251 > 250\)/);
+});
+
 test('AMO update: upload, wait for validation, create a version with the sources attached', () => {
   amoPackages();
   const r = run(AMO, [uploaded, validated, exists, versioned]);

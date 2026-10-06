@@ -57,6 +57,31 @@ jq -e '.browser_specific_settings.gecko.data_collection_permissions.required | t
   <<<"$manifest" >/dev/null \
   || fail "$zip: manifest has no gecko.data_collection_permissions.required; AMO refuses new add-ons without it"
 case "$channel" in listed | unlisted) ;; *) fail "AMO_CHANNEL must be listed or unlisted, not $channel" ;; esac
+
+# AMO refuses a name over 50 characters and a summary (the manifest description) over 250, in any
+# locale (https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/manifest.json/name).
+too_long=()
+check_length() {
+  local field=$1 max=$2 value key file text
+  value=$(jq -r --arg f "$field" '.[$f] // ""' <<<"$manifest")
+  if [[ "$value" =~ ^__MSG_(.+)__$ ]]; then
+    key=${BASH_REMATCH[1]}
+    while IFS= read -r file; do
+      text=$(unzip -p "$zip" "$file" | jq -r --arg k "$key" \
+        'to_entries[] | select((.key | ascii_downcase) == ($k | ascii_downcase)) | .value.message')
+      [ "$(jq -Rr length <<<"$text")" -le "$max" ] \
+        || too_long+=("$field ($file, $(jq -Rr length <<<"$text") > $max): $text")
+    done < <(unzip -Z1 "$zip" | grep -E '^_locales/[^/]+/messages\.json$')
+  elif [ "$(jq -Rr length <<<"$value")" -gt "$max" ]; then
+    too_long+=("$field ($(jq -Rr length <<<"$value") > $max): $value")
+  fi
+}
+check_length name 50
+check_length description 250
+if [ "${#too_long[@]}" -gt 0 ]; then
+  printf '  %s\n' "${too_long[@]}" >&2
+  fail "AMO would refuse ${#too_long[@]} over-long manifest strings (above); shorten them, or give Firefox its own"
+fi
 echo "Package: $zip ($guid $version, $channel), sources $sources"
 
 if [ "${AMO_BUILD_ONLY:-}" = true ]; then
