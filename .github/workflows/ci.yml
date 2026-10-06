@@ -30,3 +30,6 @@ jobs:
       - name: Run review-nudge tests and typecheck
         run: pnpm exec vitest run && pnpm exec tsc --noEmit
         working-directory: packages/review-nudge
+      # store-publish/: the AMO and Edge release scripts, against a stub curl. Node's own runner, no deps.
+      - name: Run store-publish tests
+        run: node --test store-publish/tests/*.test.mjs
