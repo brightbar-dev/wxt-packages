@@ -1,0 +1,40 @@
+name: Publish to addons.mozilla.org
+description: >
+  Lint the Firefox zip, make the sources zip reviewer-buildable and prove it rebuilds the package,
+  then (unless build-only) submit both to AMO. Expects .output/*-firefox.zip and .output/*-sources.zip
+  from `wxt zip --browser firefox`, and Node on PATH.
+inputs:
+  build-only:
+    description: '"true": check and prove the packages, submit nothing, need no credential (the dry run)'
+    required: true
+  jwt-issuer:
+    description: AMO API key (JWT issuer)
+    required: false
+    default: ''
+  jwt-secret:
+    description: AMO API secret (JWT secret)
+    required: false
+    default: ''
+  channel:
+    description: listed or unlisted
+    required: false
+    default: listed
+  metadata:
+    description: listing metadata for the first submission only
+    required: false
+    default: store/amo.json
+runs:
+  using: composite
+  steps:
+    - name: Lint and prove the sources rebuild the package
+      shell: bash
+      run: bash "$GITHUB_ACTION_PATH/../bin/amo-check.sh"
+    - name: Submit to AMO
+      shell: bash
+      env:
+        AMO_BUILD_ONLY: ${{ inputs.build-only }}
+        AMO_JWT_ISSUER: ${{ inputs.jwt-issuer }}
+        AMO_JWT_SECRET: ${{ inputs.jwt-secret }}
+        AMO_CHANNEL: ${{ inputs.channel }}
+        AMO_METADATA: ${{ inputs.metadata }}
+      run: bash "$GITHUB_ACTION_PATH/../bin/amo-publish.sh"
