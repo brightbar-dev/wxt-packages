@@ -162,6 +162,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  vite: 8.3.3
+  happy-dom: ^21.0.4
+
 importers:
 
   .: {}
@@ -169,14 +173,14 @@ importers:
   packages/review-nudge:
     devDependencies:
       happy-dom:
-        specifier: ^21.0.1
-        version: 21.0.1
+        specifier: ^21.0.4
+        version: 21.0.4
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
       vitest:
         specifier: ^5.0.4
-        version: 5.0.4(@types/node@22.20.4)(happy-dom@21.0.1)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+        version: 5.0.4(@types/node@22.20.4)(happy-dom@21.0.4)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
 
   packages/wxt-extpay:
     devDependencies:
@@ -194,10 +198,10 @@ importers:
         version: 7.0.2
       vitest:
         specifier: ^5.0.4
-        version: 5.0.4(@types/node@22.20.4)(happy-dom@20.14.5)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+        version: 5.0.4(@types/node@22.20.4)(happy-dom@21.0.4)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
       wxt:
         specifier: ^0.21.4
-        version: 0.21.4(rolldown@1.2.11)(typescript@7.0.2)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+        version: 0.21.4(rolldown@1.2.11)(typescript@7.0.2)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
 
 packages:
 
@@ -512,7 +516,7 @@ packages:
     resolution: {integrity: sha512-tqAlrYWce4iUxhr3ncNohejtCTOcHeE8XWrSNZY3OhPoDn01yeGv+gnaBy64ATp7o6pb03eIbBAjzmibpc9vIQ==}
     peerDependencies:
       msw: ^2.4.9 || ^3.0.0
-      vite: ^6.0.0 || ^7.0.0 || ^8.0.0
+      vite: 8.3.3
     peerDependenciesMeta:
       msw:
         optional: true
@@ -736,12 +740,8 @@ packages:
     resolution: {integrity: sha512-r+mvuDjrjMpsdw46Kmeydb8bdHm7wOKw8wNBtTndkjbPjgAp5oUJUxRE76wZFknxIPokfWvep2qSXK37aXE6zg==}
     hasBin: true
 
-  happy-dom@20.14.5:
-    resolution: {integrity: sha512-x/RzkpWO40bTjIoT30iQtt64FLLmH/iRcUCN2X//bLx7H3ifkdfPXyqsro/OYtqzIAhiLMMA7mmiOR9C3NOKjQ==}
-    engines: {node: '>=20.0.0'}
-
-  happy-dom@21.0.1:
-    resolution: {integrity: sha512-pRBs/u9fhrncyByOl58DMex0R2uAj6ZPKWIjV5j5yNGZBqLw3P6BTRhlc0DD5b/Ht4/6JYTMuE2LJhUWRC6SGw==}
+  happy-dom@21.0.4:
+    resolution: {integrity: sha512-tFm+GaLBgo6o0awHnvHaNoraVo27qJ+2tZEtZ+cIa08hXbeitrxAJajLI05hsUy/2/YTKcUjQYzHe5mCcraLBw==}
     engines: {node: '>=20.0.0'}
 
   hookable@6.1.2:
@@ -1062,7 +1062,7 @@ packages:
       rolldown: '*'
       rollup: '*'
       unloader: '*'
-      vite: '*'
+      vite: 8.3.3
       webpack: '*'
     peerDependenciesMeta:
       '@farmfe/core':
@@ -1086,8 +1086,8 @@ packages:
       webpack:
         optional: true
 
-  vite@8.3.1:
-    resolution: {integrity: sha512-/bvH9E9tmCXRGp2uXY3WbOldqpTwFkbha/8ANaEQ6VkxhH60KyqLwgZq6lG2y+4uT55x9+9eUHMpQ7uGnOCKjA==}
+  vite@8.3.3:
+    resolution: {integrity: sha512-cTAldKPImjg6c+gk48U19POPn3GCBzZwpdsN8ZMEEcbpes+6/wvfqUd0C2y3qYY4wsj8PwgFwrZ/1jBPVttMSg==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -1143,9 +1143,9 @@ packages:
       '@vitest/coverage-istanbul': 5.0.4
       '@vitest/coverage-v8': 5.0.4
       '@vitest/ui': 5.0.4
-      happy-dom: '*'
+      happy-dom: ^21.0.4
       jsdom: '*'
-      vite: ^6.4.0 || ^7.0.0 || ^8.0.0
+      vite: 8.3.3
     peerDependenciesMeta:
       '@edge-runtime/vm':
         optional: true
@@ -1208,7 +1208,7 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=5.4'
-      vite: ^6.3.4 || ^7.0.0 || ^8.0.0-0
+      vite: 8.3.3
       web-ext: '>=9.2.0'
     peerDependenciesMeta:
       eslint:
@@ -1420,14 +1420,14 @@ snapshots:
   '@typescript/typescript-win32-x64@7.0.2':
     optional: true
 
-  '@vitest/mocker@5.0.4(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))':
+  '@vitest/mocker@5.0.4(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))':
     dependencies:
       '@jridgewell/trace-mapping': 0.3.31
       '@vitest/spy': 5.0.4
       estree-walker: 3.0.3
       magic-string: 1.4.3
     optionalDependencies:
-      vite: 8.3.1(@types/node@22.20.4)(jiti@2.7.0)
+      vite: 8.3.3(@types/node@22.20.4)(jiti@2.7.0)
 
   '@vitest/spy@5.0.4': {}
 
@@ -1616,21 +1616,7 @@ snapshots:
 
   giget@3.3.1: {}
 
-  happy-dom@20.14.5:
-    dependencies:
-      '@types/node': 22.20.4
-      '@types/whatwg-mimetype': 3.0.2
-      '@types/ws': 8.18.1
-      buffer-image-size: 0.6.4
-      entities: 7.0.1
-      whatwg-mimetype: 3.0.0
-      ws: 8.21.3
-    transitivePeerDependencies:
-      - bufferutil
-      - utf-8-validate
-    optional: true
-
-  happy-dom@21.0.1:
+  happy-dom@21.0.4:
     dependencies:
       '@types/node': 22.20.4
       '@types/whatwg-mimetype': 3.0.2
@@ -1918,7 +1904,7 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  unimport@6.5.0(rolldown@1.2.11)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0)):
+  unimport@6.5.0(rolldown@1.2.11)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0)):
     dependencies:
       acorn: 8.18.0
       escape-string-regexp: 5.0.0
@@ -1932,7 +1918,7 @@ snapshots:
       scule: 1.3.0
       strip-literal: 4.0.0
       tinyglobby: 0.2.17
-      unplugin: 3.4.0(rolldown@1.2.11)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+      unplugin: 3.4.0(rolldown@1.2.11)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
       unplugin-utils: 0.3.2
     optionalDependencies:
       rolldown: 1.2.11
@@ -1952,16 +1938,16 @@ snapshots:
       pathe: 2.0.3
       picomatch: 4.0.7
 
-  unplugin@3.4.0(rolldown@1.2.11)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0)):
+  unplugin@3.4.0(rolldown@1.2.11)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0)):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       picomatch: 4.0.7
       webpack-virtual-modules: 0.6.2
     optionalDependencies:
       rolldown: 1.2.11
-      vite: 8.3.1(@types/node@22.20.4)(jiti@2.7.0)
+      vite: 8.3.3(@types/node@22.20.4)(jiti@2.7.0)
 
-  vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0):
+  vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0):
     dependencies:
       lightningcss: 1.33.0
       picomatch: 4.0.7
@@ -1973,10 +1959,10 @@ snapshots:
       fsevents: 2.3.3
       jiti: 2.7.0
 
-  vitest@5.0.4(@types/node@22.20.4)(happy-dom@20.14.5)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0)):
+  vitest@5.0.4(@types/node@22.20.4)(happy-dom@21.0.4)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0)):
     dependencies:
       '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.4(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
+      '@vitest/mocker': 5.0.4(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
       chai: 6.3.0
       es-module-lexer: 2.3.2
       expect-type: 1.4.0
@@ -1987,33 +1973,11 @@ snapshots:
       tinybench: 6.2.2
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      vite: 8.3.1(@types/node@22.20.4)(jiti@2.7.0)
+      vite: 8.3.3(@types/node@22.20.4)(jiti@2.7.0)
       why-is-node-running: 3.2.1
     optionalDependencies:
       '@types/node': 22.20.4
-      happy-dom: 20.14.5
-    transitivePeerDependencies:
-      - msw
-
-  vitest@5.0.4(@types/node@22.20.4)(happy-dom@21.0.1)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0)):
-    dependencies:
-      '@types/chai': 5.2.3
-      '@vitest/mocker': 5.0.4(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
-      chai: 6.3.0
-      es-module-lexer: 2.3.2
-      expect-type: 1.4.0
-      magic-string: 1.4.3
-      obug: 3.0.0
-      picomatch: 4.0.7
-      std-env: 4.3.0
-      tinybench: 6.2.2
-      tinyexec: 1.3.1
-      tinyglobby: 0.2.17
-      vite: 8.3.1(@types/node@22.20.4)(jiti@2.7.0)
-      why-is-node-running: 3.2.1
-    optionalDependencies:
-      '@types/node': 22.20.4
-      happy-dom: 21.0.1
+      happy-dom: 21.0.4
     transitivePeerDependencies:
       - msw
 
@@ -2033,7 +1997,7 @@ snapshots:
 
   ws@8.21.3: {}
 
-  wxt@0.21.4(rolldown@1.2.11)(typescript@7.0.2)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0)):
+  wxt@0.21.4(rolldown@1.2.11)(typescript@7.0.2)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0)):
     dependencies:
       '@1natsu/wait-element': 4.2.0
       '@aklinker1/rollup-plugin-visualizer': 5.12.0
@@ -2063,8 +2027,8 @@ snapshots:
       tiny-open: 1.3.0
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      unimport: 6.5.0(rolldown@1.2.11)(vite@8.3.1(@types/node@22.20.4)(jiti@2.7.0))
-      vite: 8.3.1(@types/node@22.20.4)(jiti@2.7.0)
+      unimport: 6.5.0(rolldown@1.2.11)(vite@8.3.3(@types/node@22.20.4)(jiti@2.7.0))
+      vite: 8.3.3(@types/node@22.20.4)(jiti@2.7.0)
     optionalDependencies:
       typescript: 7.0.2
     transitivePeerDependencies:

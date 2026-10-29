@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   esbuild: true
   spawn-sync: false
+
+overrides:
+  vite: 8.3.3
+  happy-dom: ^21.0.4
