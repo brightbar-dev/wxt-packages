@@ -218,6 +218,48 @@ test('AMO first submission without store/amo.json fails before creating anything
   assert.ok(!r.calls.some((c) => c.method === 'POST' && c.url.endsWith('/addons/addon/')));
 });
 
+test('AMO first submission preserves a custom licence name and full text', () => {
+  amoPackages();
+  const custom_license = {
+    name: { 'en-US': 'FSL-1.1-MIT' },
+    text: { 'en-US': 'Copyright 2026 Kenneth Donald Lynch, Jr.\n\nFunctional Source License text.' },
+  };
+  mkdirSync(join(dir, 'work/store'), { recursive: true });
+  writeFileSync(join(dir, 'work/store/amo.json'), JSON.stringify({
+    categories: { firefox: ['web-development'] }, summary: { 'en-US': 'Short.' },
+    version: { custom_license },
+  }));
+  const r = run(AMO, [
+    uploaded, validated,
+    { match: `/addons/addon/${GUID}/$`, responses: [{ code: 404, body: {} }] },
+    { method: 'POST', match: '/addons/addon/$', responses: [{ code: 201, body: { id: 9, current_version: { id: 55 } } }] },
+    { method: 'PATCH', match: `/addons/addon/${GUID}/versions/55/$`, responses: [{ code: 200, body: { id: 55 } }] },
+  ]);
+  assert.equal(r.status, 0, r.out);
+  const create = r.calls.find((c) => c.method === 'POST' && c.url.endsWith('/addons/addon/'));
+  assert.deepEqual(JSON.parse(create.body).version, { custom_license, upload: 'u1' });
+  assert.deepEqual(r.calls.at(-1).forms, ['source=@.output/ext-1.2.3-sources.zip']);
+});
+
+test('AMO refuses ambiguous or incomplete custom licences before any network, including dry run', () => {
+  amoPackages();
+  mkdirSync(join(dir, 'work/store'), { recursive: true });
+  for (const version of [
+    { license: 'MIT', custom_license: { name: { 'en-US': 'FSL-1.1-MIT' }, text: { 'en-US': 'Text' } } },
+    { custom_license: { name: { 'en-US': 'FSL-1.1-MIT' }, text: { 'en-US': '' } } },
+    { custom_license: { text: { 'en-US': 'Text' } } },
+    {},
+  ]) {
+    writeFileSync(join(dir, 'work/store/amo.json'), JSON.stringify({
+      categories: { firefox: ['web-development'] }, summary: { 'en-US': 'Short.' }, version,
+    }));
+    const r = run(AMO, [], { AMO_BUILD_ONLY: 'true' });
+    assert.notEqual(r.status, 0, r.out);
+    assert.match(r.stderr, /either version\.license or custom_license/);
+    assert.equal(r.calls.length, 0);
+  }
+});
+
 test('AMO surfaces the API message when the version is refused', () => {
   amoPackages();
   const r = run(AMO, [uploaded, validated, exists, { ...versioned, responses: [{ code: 400, body: { version: ['Version 1.2.3 already exists.'] } }] }]);

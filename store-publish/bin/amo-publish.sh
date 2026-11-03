@@ -84,6 +84,25 @@ if [ "${#too_long[@]}" -gt 0 ]; then
 fi
 echo "Package: $zip ($guid $version, $channel), sources $sources"
 
+metadata="${AMO_METADATA:-store/amo.json}"
+check_metadata() {
+  for need in '.categories.firefox' '.summary'; do
+    jq -e "$need" "$metadata" >/dev/null || fail "$metadata lacks $need, which AMO requires for a new listed add-on"
+  done
+  jq -e '
+    .version |
+    if has("license") and has("custom_license") then false
+    elif has("license") then (.license | type == "string" and length > 0)
+    else
+      [.custom_license.name["en-US"], .custom_license.text["en-US"]] |
+      all(.[]; type == "string" and length > 0)
+    end
+  ' "$metadata" >/dev/null \
+    || fail "$metadata needs either version.license or custom_license with nonempty en-US name and text"
+}
+# Validate a prepared first-listing payload in build-only mode too, before any network call.
+if [ -f "$metadata" ]; then check_metadata; fi
+
 if [ "${AMO_BUILD_ONLY:-}" = true ]; then
   echo "AMO_BUILD_ONLY=true: checked $zip and $sources, submitted nothing."
   exit 0
@@ -148,12 +167,9 @@ if [ "$CODE" = 200 ]; then
   [ "$CODE" = 201 ] || fail "version create rejected (HTTP $CODE): $(describe "$BODY")"
   vid=$(jq -r '.id' <<<"$BODY")
 elif [ "$CODE" = 404 ]; then
-  metadata="${AMO_METADATA:-store/amo.json}"
   [ -f "$metadata" ] || fail "$guid is not on AMO yet and there is no $metadata to create its listing from"
+  check_metadata
   payload=$(jq -c --arg u "$uuid" '.version = ((.version // {}) + {upload: $u})' "$metadata")
-  for need in '.categories.firefox' '.summary' '.version.license'; do
-    jq -e "$need" <<<"$payload" >/dev/null || fail "$metadata lacks $need, which AMO requires for a new listed add-on"
-  done
   call -X POST "$api/addons/addon/" -H 'Content-Type: application/json' -d "$payload"
   [ "$CODE" = 201 ] || fail "add-on create rejected (HTTP $CODE): $(describe "$BODY")"
   echo "Created: add-on $(jq -r '.id' <<<"$BODY") ($guid)"

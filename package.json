@@ -1,5 +1,6 @@
 {
   "private": true,
   "name": "wxt-packages",
-  "packageManager": "pnpm@12.6.0"
+  "packageManager": "pnpm@12.6.0",
+  "license": "FSL-1.1-MIT"
 }
