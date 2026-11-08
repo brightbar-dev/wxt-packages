@@ -6,7 +6,8 @@
 #      minified code, rebuilt with open tools and NO private registry access
 #      (https://extensionworkshop.com/documentation/publish/source-code-submission/).
 #      - WXT's zip.downloadPackages puts private packages in .wxt/local_modules and points package.json
-#        "resolutions" at them, which pnpm ignores. Those entries become pnpm-workspace.yaml overrides.
+#        "resolutions" at them, which pnpm ignores. Those entries become pnpm-workspace.yaml overrides,
+#        added to the repo's own overrides: block when it has one (a duplicate key fails).
 #      - AMO-REVIEWER-BUILD.md is added with the exact commands.
 #   3. Rebuild from that sources zip exactly as the reviewer would (fresh store, no npm credentials) and
 #      require every file to match the Firefox zip byte for byte. A sources zip that does not rebuild
@@ -63,13 +64,32 @@ case "$pm" in
       | {name: (.key | sub("(?<=.)@[^@]+$"; "")), path: (.value | sub("^file:(//)?(\\./)?"; ""))}]' "$work/src/package.json")
     if [ "$overrides" != "[]" ]; then
       jq 'del(.resolutions)' "$work/src/package.json" >"$work/package.json" && mv "$work/package.json" "$work/src/package.json"
-      grep -q '^overrides:' "$work/src/pnpm-workspace.yaml" 2>/dev/null \
-        && fail "pnpm-workspace.yaml already has overrides:; merge them by hand"
-      {
-        echo "# Added for the AMO sources zip: private packages installed from the tarballs beside this file."
-        echo "overrides:"
-        jq -r '.[] | "  '"'"'\(.name)'"'"': file:\(.path)"' <<<"$overrides"
-      } >>"$work/src/pnpm-workspace.yaml"
+      ws="$work/src/pnpm-workspace.yaml"
+      note="# Added for the AMO sources zip: private packages installed from the tarballs beside this file."
+      if grep -q '^overrides:' "$ws" 2>/dev/null; then
+        # The repo already overrides something (e.g. an exact vite pin): add ours to the same block.
+        grep -Eq '^overrides:[[:space:]]*(#.*)?$' "$ws" \
+          || fail "pnpm-workspace.yaml has an inline overrides: value; write it as a block mapping"
+        # The block's lines: everything after "overrides:" up to the next top-level key.
+        block=$(awk '/^overrides:/{o=1; next} o && /^[^[:space:]#]/{o=0} o' "$ws")
+        indent=$(awk '/^[[:space:]]+[^[:space:]#]/ && !n {match($0, /^[[:space:]]+/); print substr($0, 1, RLENGTH); n=1}' <<<"$block")
+        [ -n "$indent" ] || indent="  "
+        keys=$(sed -E "s/^[[:space:]]+//; s/[[:space:]]*:.*//; s/^['\"]//; s/['\"]$//" <<<"$block")
+        while read -r name; do
+          grep -Fxq -- "$name" <<<"$keys" \
+            && fail "pnpm-workspace.yaml already overrides $name; the AMO sources zip must point it at its tarball"
+        done < <(jq -r '.[].name' <<<"$overrides")
+        entries=$(jq -r --arg i "$indent" '.[] | "\($i)'"'"'\(.name)'"'"': file:\(.path)"' <<<"$overrides")
+        AMO_NOTE="$indent$note" AMO_ENTRIES="$entries" \
+          awk '{print} /^overrides:/ && !done {print ENVIRON["AMO_NOTE"]; print ENVIRON["AMO_ENTRIES"]; done=1}' "$ws" >"$work/ws.yaml"
+        mv "$work/ws.yaml" "$ws"
+      else
+        {
+          echo "$note"
+          echo "overrides:"
+          jq -r '.[] | "  '"'"'\(.name)'"'"': file:\(.path)"' <<<"$overrides"
+        } >>"$ws"
+      fi
     fi
     install="npx --yes $pm install --no-frozen-lockfile"
     build_reviewer="npx --yes $pm ${build_cmd#pnpm }"

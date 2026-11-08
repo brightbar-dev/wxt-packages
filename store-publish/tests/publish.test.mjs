@@ -267,6 +267,69 @@ test('AMO surfaces the API message when the version is refused', () => {
   assert.match(r.stderr, /HTTP 400.*already exists/);
 });
 
+// ---------- amo-check.sh: the reviewer sources zip ----------
+// Lint and rebuild are skipped (they need web-ext and a real WXT project); what is tested is the
+// rewrite of package.json "resolutions" into pnpm-workspace.yaml overrides.
+
+const CHECK = resolve(here, '../bin/amo-check.sh');
+const NUDGE = '.wxt/local_modules/brightbar-dev-review-nudge-0.3.0.tgz';
+
+function sourcesWith(workspaceYaml) {
+  pack('ext-1.2.3-firefox.zip', FIREFOX);
+  const src = join(dir, 'src');
+  mkdirSync(src, { recursive: true });
+  writeFileSync(join(src, 'package.json'), JSON.stringify({
+    name: 'ext', version: '1.2.3', packageManager: 'pnpm@12.6.0',
+    resolutions: { '@brightbar-dev/review-nudge@0.3.0': `file://./${NUDGE}` },
+  }));
+  if (workspaceYaml !== undefined) writeFileSync(join(src, 'pnpm-workspace.yaml'), workspaceYaml);
+  const r = spawnSync('zip', ['-qr', join(dir, 'work/.output/ext-1.2.3-sources.zip'), '.'], { cwd: src });
+  assert.equal(r.status, 0);
+}
+
+function check() {
+  const r = run(CHECK, [], { AMO_SKIP_LINT: 'true', AMO_SKIP_REBUILD: 'true' });
+  const out = join(dir, 'unzipped');
+  rmSync(out, { recursive: true, force: true });
+  spawnSync('unzip', ['-q', join(dir, 'work/.output/ext-1.2.3-sources.zip'), '-d', out]);
+  const read = (f) => (existsSync(join(out, f)) ? readFileSync(join(out, f), 'utf8') : null);
+  return { ...r, workspace: read('pnpm-workspace.yaml'), pkg: JSON.parse(read('package.json')) };
+}
+
+test('amo-check: private packages become pnpm overrides in a new block', () => {
+  sourcesWith('packages:\n  - .\n');
+  const r = check();
+  assert.equal(r.status, 0, r.out);
+  assert.equal(r.pkg.resolutions, undefined);
+  assert.equal(r.workspace, 'packages:\n  - .\n'
+    + '# Added for the AMO sources zip: private packages installed from the tarballs beside this file.\n'
+    + `overrides:\n  '@brightbar-dev/review-nudge': file:${NUDGE}\n`);
+});
+
+test('amo-check: private packages join an existing overrides block (json-viewer-pro#44)', () => {
+  sourcesWith("packages:\n  - .\noverrides:\n    vite: 8.3.3\n    'happy-dom': 21.0.4\nonlyBuiltDependencies:\n  - esbuild\n");
+  const r = check();
+  assert.equal(r.status, 0, r.out);
+  assert.equal(r.workspace, 'packages:\n  - .\noverrides:\n'
+    + '    # Added for the AMO sources zip: private packages installed from the tarballs beside this file.\n'
+    + `    '@brightbar-dev/review-nudge': file:${NUDGE}\n`
+    + "    vite: 8.3.3\n    'happy-dom': 21.0.4\nonlyBuiltDependencies:\n  - esbuild\n");
+});
+
+test('amo-check: refuses a repo override of the same private package', () => {
+  sourcesWith("overrides:\n  '@brightbar-dev/review-nudge': 0.2.0\n  vite: 8.3.3\n");
+  const r = check();
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /already overrides @brightbar-dev\/review-nudge/);
+});
+
+test('amo-check: refuses an inline overrides value rather than corrupting it', () => {
+  sourcesWith('overrides: { vite: 8.3.3 }\n');
+  const r = check();
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /inline overrides/);
+});
+
 // ---------- Edge ----------
 
 const up = { method: 'POST', match: '/submissions/draft/package$', responses: [{ code: 202, body: {}, location: 'op-up' }] };
