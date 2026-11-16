@@ -41,7 +41,7 @@
     "wxt": ">=0.19.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.64.1",
+    "@playwright/test": "^1.65.1",
     "@types/node": "^22.20.4",
     "extpay": "^3.1.2",
     "typescript": "^7.0.2",
